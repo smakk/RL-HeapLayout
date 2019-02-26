@@ -7,16 +7,17 @@ class FooEnv(gym.Env):
 
     def __init__(self):
         self.action_space = spaces.Discrete(5)
-        self.result = []
+        self.observation_space = spaces.Discrete(50)
+        self.state = 0
     def step(self, action):
-        self.result.append(action)
+        self.state += action
         reward = action
         done = False
-        if len(self.result)>50:
+        if self.state>50:
             done = True
-        return 1,reward,done,{}
+        return state,reward,done,{}
     def reset(self):
-        self.result = []
+        self.state = 0
     def render(self, mode='human'):
         ...
     def close(self):

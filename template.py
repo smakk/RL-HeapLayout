@@ -49,6 +49,43 @@ class HeapManip:
                 " ".join([str(x) for x in self.sizes]))
         return self._last_instantiation
 
+    def as_code_by_index(self, frag_store: FragmentStore, index: int):
+        if self._accepted_solution is not None:
+            return self._accepted_solution
+
+        seq = frag_store.get_fragments_by_index(index)
+        sequence.append("$var_vtx_{} = {};".format(
+                        1, seq))
+        self._last_instantiation = self._last_instantiation + "\n" + "\n".join(sequence)
+        return self._last_instantiation
+
+    def reset()-> str:
+
+        sequence = []
+        for i in range(random.randint(1, 10)):
+            self._length += 1
+
+            # Alloc
+            size = random.choice(self.sizes)
+            if random.random() > .995:
+                # .5 % of the time select at random from the list of candidates
+                candidates = frag_store.get_fragments_for_size(size)
+                sequence.append("# Randomly selecting from size {}".format(
+                    size))
+                sequence.append("$var_vtx_{} = {};".format(
+                        i, random.choice(candidates)[0]))
+            else:
+                # 99.5% of the time use the shortest sequence in the candidates
+                candidates = frag_store.get_shortest_fragments_for_size(size)
+                seq = random.choice(candidates)
+                sequence.append(
+                        "# Selecting sequence {} for size {}".format(
+                            seq[1], size))
+                sequence.append("$var_vtx_{} = {};".format(i, seq[0]))
+
+            self._last_instantiation = "\n".join(sequence)
+        return self._last_instantiation
+
     '''
         select a new step
     ''' 
@@ -239,7 +276,7 @@ class Template:
         with open(output.as_posix(), 'w') as fd:
             fd.write(self._last_instantiation())
     
-    def rl_instantiate(self) -> str:
+    def rl_instantiate(self, index: int) -> str:
         '''for RL algorithm to generate a appropriate PHP file'''
         res = []
         require_distance_encountered = False
@@ -255,6 +292,10 @@ class Template:
 
             if require_distance_encountered:
                 res.append(component.as_directive())
+                continue
+
+             if isinstance(component, shrike.template.HeapManip):
+                res.append(component.as_code_by_index(self._frag_store, index))
                 continue
 
             res.append(component.as_code(self._frag_store))

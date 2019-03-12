@@ -45,7 +45,19 @@ class FooEnv(gym.Env):
         #print(interactions)
         logging.info("{}".format(interactions))
         logging.info("{}".format(new_distance))
+        fragment_useful = []
+        num = 0
+        for i in self.template.hlm_sizes_in_use():
+            fragment_useful.append(fragment_store.get_shortest_fragments_for_size(i))
+            logging.info("{}".format(len(fragment_store.get_shortest_fragments_for_size(i))))
+            num = num + i
+        print(fragment_useful)
+        
+        self.action_space = spaces.Discrete(num)
+        self.observation_space = spaces.Box(np.array([0, 0]), np.array([-1000000, 1000000]))
+        self.state = [0,new_distance]
 
+        self.pre_distance = new_distance
         '''
         for num in range(0,2):
             logging.info("generate {} times".format(num))
@@ -59,11 +71,18 @@ class FooEnv(gym.Env):
         self.L = 10
         self.action_space = spaces.Discrete(5) # 0, 1, 2，3，4: 不动，上下左右
         self.observation_space = spaces.Box(np.array([-self.L, -self.L]), np.array([self.L, self.L]))
-        self.state = None
+        
         '''
     def step(self, action):
         
-        
+        next = self.template.rl_instantiate(action)
+        fpath, interactions, err = php7._run_candidate(candidate, '/home/likaiming/PHP-SHRIKE/install/bin/php')
+        new_distance = php7._extract_distance(interactions)
+        done = self.is_solved()
+        self.state = [0,new_distance]
+
+        if self.pre_distance<0 and new_distance<0:
+            reward = 
         
         '''
         x, y = self.state
@@ -97,7 +116,11 @@ class FooEnv(gym.Env):
         '''
         return self.state, reward, done, {}
     def reset(self):
-        self.state = [2,2]#np.ceil(np.random.rand(2)*2*self.L)-self.L
+        init_state = self.reset()
+        fpath, interactions, err = php7._run_candidate(candidate, '/home/likaiming/PHP-SHRIKE/install/bin/php')
+        new_distance = php7._extract_distance(interactions)
+        
+        self.state = [0,new_distance]#np.ceil(np.random.rand(2)*2*self.L)-self.L
 
         return self.state
     def render(self, mode='human'):

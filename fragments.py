@@ -133,6 +133,15 @@ class FragmentStore:
 
         return set(self._store.values())
 
+    def get_fragments_by_index(self, index: int)-> List[Tuple[str, SequenceSummary]]:
+        current = 0;
+        for key,value in self._store.items():
+            if current == index:
+                return value
+            current += 1
+        return get_fragments_for_size(1)[0]
+                
+
     def get_fragments_for_size(
             self, size: int) -> List[Tuple[str, SequenceSummary]]:
         """Get the fragments, and their summaries, which make allocations of

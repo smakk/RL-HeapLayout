@@ -4,12 +4,14 @@ import gym_foo
 from baselines import deepq
 
 '''
-env = gym.make('foo-v0')
+env = gym.make("CartPole-v0")
+
 env.reset()
 env.step(env.action_space.sample())
 print(env.result)
 '''
-env = gym.make("foo-v0")
+
+env = gym.make('foo-v0')
 
 act = deepq.learn(
     env,

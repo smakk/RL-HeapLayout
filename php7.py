@@ -714,6 +714,7 @@ def _run_candidate(candidate: str, php: str):
 
             if o.startswith("vtx "):
                 interactions.append(o.strip())
+                #print(o)
     except OSError:
         err = ERR_OS
         logger.error("OSError running {}".format(fpath))
@@ -724,6 +725,7 @@ def _run_candidate(candidate: str, php: str):
         logger.error("ValueError running {}: {}".format(fpath, e))
         err = ERR_OS
 
+    #print(interactions)
     return fpath, interactions, err
 
 
@@ -735,8 +737,10 @@ def _extract_distance(output):
             split = line.split(" ")
             dist = int(split[2], 10)
             break
+    '''
     if dist and dist < 0:
         return None
+    '''
     return dist
 
 

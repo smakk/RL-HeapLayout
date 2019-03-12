@@ -39,6 +39,7 @@ class HeapManip:
         self._accepted_solution = None
         self._last_instantiation = ""
         self._length = 0
+        self._times = 0
 
     def __len__(self):
         return self._length
@@ -48,6 +49,10 @@ class HeapManip:
                 " ".join([str(x) for x in self.sizes]))
         return self._last_instantiation
 
+    '''
+        select a new step
+    ''' 
+
     def as_code(self, frag_store: FragmentStore) -> str:
         if self._accepted_solution is not None:
             return self._accepted_solution
@@ -55,6 +60,8 @@ class HeapManip:
         sequence = []
         still_alloced = set()
         self._length = 0
+
+        '''
         for i in range(random.randint(1, 1024)):
             self._length += 1
             if still_alloced and random.random() > .98:
@@ -85,6 +92,15 @@ class HeapManip:
             still_alloced.add(i)
 
         self._last_instantiation = "\n".join(sequence)
+        '''
+
+        size = random.choice(self.sizes)
+        candidates = frag_store.get_shortest_fragments_for_size(size)
+        seq = random.choice(candidates)
+        sequence.append("$var_vtx_{} = {};".format(1, seq[0]))
+        self._times += 1
+        self._last_instantiation = self._last_instantiation + "\n" + "\n".join(sequence)
+
         return self._last_instantiation
 
     def accept_solution(self):
@@ -222,6 +238,31 @@ class Template:
     def save_to(self, output: pathlib.Path):
         with open(output.as_posix(), 'w') as fd:
             fd.write(self._last_instantiation())
+    
+    def rl_instantiate(self) -> str:
+        '''for RL algorithm to generate a appropriate PHP file'''
+        res = []
+        require_distance_encountered = False
+
+        for component in self._template:
+            if isinstance(component, shrike.template.Code):
+                res.append(component.as_code(self._frag_store))
+                continue
+
+            if isinstance(component, shrike.template.TemplateVersion):
+                res.append(component.as_directive())
+                continue
+
+            if require_distance_encountered:
+                res.append(component.as_directive())
+                continue
+
+            res.append(component.as_code(self._frag_store))
+            if (isinstance(component, shrike.template.RequireDistance) and
+                    not component.solved):
+                require_distance_encountered = True
+
+        return '\n'.join(res)
 
     def instantiate(self) -> str:
         """Produce a valid PHP file with an attempted solution to the next

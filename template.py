@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import List
 from typing import Set
 
+import logging
+
 import shrike
 
 from shrike import FragmentStore
@@ -54,12 +56,16 @@ class HeapManip:
             return self._accepted_solution
 
         seq = frag_store.get_fragments_by_index(index)
+        sequence = []
         sequence.append("$var_vtx_{} = {};".format(
                         1, seq))
+
+        logging.info("action is {} and get sequence is {}".format(index, seq))
         self._last_instantiation = self._last_instantiation + "\n" + "\n".join(sequence)
+
         return self._last_instantiation
 
-    def reset()-> str:
+    def reset(self, frag_store: FragmentStore)-> str:
 
         sequence = []
         for i in range(random.randint(1, 10)):
@@ -275,6 +281,34 @@ class Template:
     def save_to(self, output: pathlib.Path):
         with open(output.as_posix(), 'w') as fd:
             fd.write(self._last_instantiation())
+
+    def reset(self, frag_store: FragmentStore) -> str:
+        res = []
+        require_distance_encountered = False
+
+        for component in self._template:
+            if isinstance(component, shrike.template.Code):
+                res.append(component.as_code(self._frag_store))
+                continue
+
+            if isinstance(component, shrike.template.TemplateVersion):
+                res.append(component.as_directive())
+                continue
+
+            if require_distance_encountered:
+                res.append(component.as_directive())
+                continue
+            #print(111111111111111)
+            if isinstance(component, shrike.template.HeapManip):
+                res.append(component.reset(frag_store))
+                continue
+
+            res.append(component.as_code(self._frag_store))
+            if (isinstance(component, shrike.template.RequireDistance) and
+                    not component.solved):
+                require_distance_encountered = True
+
+        return '\n'.join(res)
     
     def rl_instantiate(self, index: int) -> str:
         '''for RL algorithm to generate a appropriate PHP file'''
@@ -293,8 +327,8 @@ class Template:
             if require_distance_encountered:
                 res.append(component.as_directive())
                 continue
-
-             if isinstance(component, shrike.template.HeapManip):
+            #print(111111111111111)
+            if isinstance(component, shrike.template.HeapManip):
                 res.append(component.as_code_by_index(self._frag_store, index))
                 continue
 

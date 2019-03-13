@@ -729,8 +729,8 @@ def _run_candidate(candidate: str, php: str):
     return fpath, interactions, err
 
 
-def _extract_distance(output):
-    dist = None
+def _extract_distance(output) -> int:
+    dist = 0
 
     for line in output:
         if line.startswith("vtx distance"):

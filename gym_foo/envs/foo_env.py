@@ -30,10 +30,10 @@ class FooEnv(gym.Env):
         os.mkdir(output_dir_path.as_posix())
         
         fragment_paths = [pathlib.Path(p) for p in ['fragged.pkl', 'fuzzed_fragged.pkl']]
-        fragment_store = FragmentStore(fragment_paths)
+        self.fragment_store = FragmentStore(fragment_paths)
         #print("{} unique sequences across {} fragments loaded from {}".format(fragment_store.num_sequences(), fragment_store.num_fragments(),[p.as_posix() for p in fragment_paths]))
         template_path = pathlib.Path('templates/cve-2013-2110-hash_init.template.php')
-        self.template = Template(template_path, fragment_store)
+        self.template = Template(template_path, self.fragment_store)
         
         shutil.copyfile('templates/cve-2013-2110-hash_init.template.php', output_dir_path / template_path.name)
 
@@ -48,16 +48,18 @@ class FooEnv(gym.Env):
         fragment_useful = []
         num = 0
         for i in self.template.hlm_sizes_in_use():
-            fragment_useful.append(fragment_store.get_shortest_fragments_for_size(i))
-            logging.info("{}".format(len(fragment_store.get_shortest_fragments_for_size(i))))
-            num = num + i
-        print(fragment_useful)
+            fragment_useful.append(self.fragment_store.get_shortest_fragments_for_size(i))
+            logging.info("{}".format(len(self.fragment_store.get_shortest_fragments_for_size(i))))
+            num = num + len(self.fragment_store.get_shortest_fragments_for_size(i))
+        #print(fragment_useful)
         
+        logging.info("all action has {} steps".format(num))
         self.action_space = spaces.Discrete(num)
         self.observation_space = spaces.Box(np.array([0, 0]), np.array([-1000000, 1000000]))
         self.state = [0,new_distance]
 
         self.pre_distance = new_distance
+        logging.info("{}".format(self.pre_distance))
         '''
         for num in range(0,2):
             logging.info("generate {} times".format(num))
@@ -75,15 +77,17 @@ class FooEnv(gym.Env):
         '''
     def step(self, action):
         
+        logging.info("action is {}".format(action))
         next = self.template.rl_instantiate(action)
-        fpath, interactions, err = php7._run_candidate(candidate, '/home/likaiming/PHP-SHRIKE/install/bin/php')
+        #logging.info("action result is {}".format(next))
+        fpath, interactions, err = php7._run_candidate(next, '/home/likaiming/PHP-SHRIKE/install/bin/php')
         new_distance = php7._extract_distance(interactions)
-        done = self.is_solved()
+        done = self.template.is_solved()
         self.state = [0,new_distance]
-
-        if self.pre_distance<0 and new_distance<0:
-            reward = 
-        
+        reward = -1
+        if new_distance>0 and (new_distance-self.pre_distance)<0:
+            reward = 200/new_distance
+        self.pre_distance = new_distance
         '''
         x, y = self.state
         if action == 0:
@@ -116,8 +120,8 @@ class FooEnv(gym.Env):
         '''
         return self.state, reward, done, {}
     def reset(self):
-        init_state = self.reset()
-        fpath, interactions, err = php7._run_candidate(candidate, '/home/likaiming/PHP-SHRIKE/install/bin/php')
+        init_state = self.template.reset(self.fragment_store)
+        fpath, interactions, err = php7._run_candidate(init_state, '/home/likaiming/PHP-SHRIKE/install/bin/php')
         new_distance = php7._extract_distance(interactions)
         
         self.state = [0,new_distance]#np.ceil(np.random.rand(2)*2*self.L)-self.L

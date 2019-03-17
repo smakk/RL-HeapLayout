@@ -60,7 +60,7 @@ class HeapManip:
         sequence.append("$var_vtx_{} = {};".format(
                         1, seq))
 
-        logging.info("action is {} and get sequence is {}".format(index, seq))
+        #logging.info("action is {} and get sequence is {}".format(index, seq))
         self._last_instantiation = self._last_instantiation + "\n" + "\n".join(sequence)
 
         return self._last_instantiation
@@ -104,8 +104,8 @@ class HeapManip:
         still_alloced = set()
         self._length = 0
 
-        '''
-        for i in range(random.randint(1, 1024)):
+        
+        for i in range(random.randint(1, 1000)):
             self._length += 1
             if still_alloced and random.random() > .98:
                 # Free
@@ -135,15 +135,16 @@ class HeapManip:
             still_alloced.add(i)
 
         self._last_instantiation = "\n".join(sequence)
-        '''
+        
 
+        '''
         size = random.choice(self.sizes)
         candidates = frag_store.get_shortest_fragments_for_size(size)
         seq = random.choice(candidates)
         sequence.append("$var_vtx_{} = {};".format(1, seq[0]))
         self._times += 1
         self._last_instantiation = self._last_instantiation + "\n" + "\n".join(sequence)
-
+        '''
         return self._last_instantiation
 
     def accept_solution(self):

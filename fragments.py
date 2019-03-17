@@ -133,11 +133,11 @@ class FragmentStore:
 
         return set(self._store.values())
 
-    def get_fragments_by_index(self, index: int)-> List[Tuple[str, SequenceSummary]]:
+    def get_fragments_by_index(self, index: int)-> str:
         current = 0;
         for key,value in self._store.items():
             if current == index:
-                return value
+                return key
             current += 1
         return get_fragments_for_size(1)[0]
                 

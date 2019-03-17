@@ -115,9 +115,12 @@ def extract_fragments(test_dir, processes):
 
     paths = pathlib.Path(test_dir).rglob('*.phps')
 
+    '''
     with multiprocessing.Pool(processes=processes) as pool:
         for path in paths:
             results = pool.map(_process_text, paths)
+    '''
+    results = _process_text(paths)
 
     no_result_count = processed_count = 0
     call_examples = defaultdict(set)
